@@ -1,5 +1,13 @@
 // components/ColoredCalendar.tsx
 import { useState, useMemo, useEffect } from 'react';
+import dayjs, { Dayjs } from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import isToday from 'dayjs/plugin/isToday';
+
+// 🔹 Подключаем плагины
+dayjs.extend(customParseFormat);
+dayjs.extend(isToday);
+dayjs.locale('ru');
 
 // 🔹 Типы
 type EventType = 'meeting' | 'deadline' | 'holiday' | 'birthday' | 'vacation';
@@ -24,6 +32,13 @@ interface CalendarDay {
   timeSlots: TimeSlot[];
 }
 
+// 🔹 Тип для объекта даты и времени
+interface DateTimeValue {
+  date: Dayjs | Date;  // dayjs объект или Date
+  time: string;         // "09:00"
+  datetime: Dayjs;      // Полный dayjs объект с датой и временем
+}
+
 interface EventColors {
   meeting: { bg: string; light: string; text: string };
   deadline: { bg: string; light: string; text: string };
@@ -32,7 +47,6 @@ interface EventColors {
   vacation: { bg: string; light: string; text: string };
 }
 
-// 🔹 Цвета событий
 const eventColors: EventColors = {
   meeting: { bg: 'bg-blue-500', light: 'bg-blue-200', text: 'text-blue-900' },
   deadline: { bg: 'bg-red-500', light: 'bg-red-200', text: 'text-red-900' },
@@ -48,14 +62,14 @@ const monthNames: string[] = [
 
 const dayNames: string[] = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
-// 🔹 Генерация дней месяца с часами
+// 🔹 Генерация дней месяца с dayjs
 const generateCalendarDays = (year: number, month: number): CalendarDay[] => {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInMonth = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-01`).daysInMonth();
   const days: CalendarDay[] = [];
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
+    const dateStr = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`).format('YYYY-MM-DD');
+    
     const timeSlots: TimeSlot[] = [
       { id: `${dateStr}-slot-1`, start: '09:00', end: '11:00', available: day % 3 !== 0 },
       { id: `${dateStr}-slot-2`, start: '11:00', end: '13:00', available: day % 2 === 0 },
@@ -85,19 +99,19 @@ const generateCalendarDays = (year: number, month: number): CalendarDay[] => {
 };
 
 interface ColoredCalendarProps {
-  setValue: (data: { date: Date; eventType?: EventType }) => void;
+  // 🔹 setValue получает объект с датой и временем
+  getDateTime: (value: DateTimeValue) => void;
 }
 
-export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
+  const [currentDate, setCurrentDate] = useState<dayjs.Dayjs>(dayjs());
   const [openTooltipDay, setOpenTooltipDay] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
-  const year: number = currentDate.getFullYear();
-  const month: number = currentDate.getMonth();
+  const year: number = currentDate.year();
+  const month: number = currentDate.month();
 
-  const firstDayOfMonth: number = new Date(year, month, 1).getDay();
+  const firstDayOfMonth: number = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-01`).day();
 
   const calendarDays: CalendarDay[] = useMemo(() => {
     return generateCalendarDays(year, month);
@@ -116,14 +130,14 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
   // 🔹 Закрытие tooltip при клике вне
   useEffect(() => {
     if (!isMobile || openTooltipDay === null) return;
-
+    
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('[data-calendar-day]')) {
         setOpenTooltipDay(null);
       }
     };
-
+    
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isMobile, openTooltipDay]);
@@ -132,56 +146,62 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
     return calendarDays.find(d => d.day === day);
   };
 
-  const isSelected = (day: number): boolean => {
-    if (!selectedDate) return false;
-    return (
-      day === selectedDate.getDate() &&
-      month === selectedDate.getMonth() &&
-      year === selectedDate.getFullYear()
-    );
-  };
-
   const isToday = (day: number): boolean => {
-    const today = new Date();
-    return (
-      day === today.getDate() &&
-      month === today.getMonth() &&
-      year === today.getFullYear()
-    );
+    return dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`).isToday();
   };
 
   const prevMonth = (): void => {
-    setCurrentDate(new Date(year, month - 1, 1));
+    setCurrentDate(currentDate.subtract(1, 'month'));
   };
 
   const nextMonth = (): void => {
-    setCurrentDate(new Date(year, month + 1, 1));
+    setCurrentDate(currentDate.add(1, 'month'));
   };
 
-  const handleDayInteraction = (day: number, e?: React.MouseEvent): void => {
-    const dayData = getDayData(day);
-    const eventType = dayData?.event?.type;
-
+  // 🔹 Клик по дню — ТОЛЬКО открывает tooltip на мобильном
+  const handleDayClick = (day: number, e?: React.MouseEvent): void => {
     if (isMobile) {
       e?.stopPropagation();
+      const dayData = getDayData(day);
       const hasFreeSlots = dayData?.timeSlots.some(s => s.available);
-
+      
       if (hasFreeSlots && openTooltipDay !== day) {
         setOpenTooltipDay(day);
         return;
       }
-
+      
       setOpenTooltipDay(null);
     }
+  };
 
-    if (!eventType) {
-      console.log('standing');
-      return;
+  // 🔹 Клик по времени — вызывает setValue с объектом { date, time, datetime }
+  const handleTimeSlotClick = (day: number, slot: TimeSlot, e: React.MouseEvent): void => {
+    e.stopPropagation();
+    
+    if (!slot.available) return;
+    
+    // 🔹 Создаём dayjs объект с датой
+    const dateDayjs = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+    
+    // 🔹 Создаём dayjs объект с датой и временем
+    const datetimeDayjs = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')} ${slot.start}`, 'YYYY-MM-DD HH:mm');
+    
+    // 🔹 Формируем объект для setValue
+    const dateTimeValue: DateTimeValue = {
+      date: dateDayjs,        // dayjs объект с датой
+      time: slot.start,       // строка времени "09:00"
+      datetime: datetimeDayjs, // полный dayjs объект с датой и временем
+    };
+    console.log({dateTimeValue});
+    
+    // ✅ Вызываем setValue ОДИН раз с объектом
+    //@ts-ignore
+    getDateTime( dateTimeValue.datetime);
+    
+    // Закрываем tooltip на мобильном
+    if (isMobile) {
+      closeTooltip();
     }
-
-    const date = new Date(year, month, day);
-    setValue({ date, eventType });
-    setSelectedDate(date);
   };
 
   const closeTooltip = (): void => {
@@ -200,21 +220,21 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
         arrow: 'left-full top-4 -translate-x-1/2 border-l-gray-800'
       };
     }
-
+    
     if (isEdgeRight) {
       return {
         container: 'right-full top-0 mr-2',
         arrow: 'right-full top-4 translate-x-1/2 border-r-gray-800'
       };
     }
-
+    
     if (isBottomRow) {
       return {
         container: 'top-full left-1/2 -translate-x-1/2 mt-2',
         arrow: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-800'
       };
     }
-
+    
     return {
       container: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
       arrow: 'top-full left-1/2 -translate-x-1/2 border-t-gray-800'
@@ -228,7 +248,7 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200">
-
+        
         {/* Заголовок */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4">
           <div className="flex items-center justify-between">
@@ -237,7 +257,9 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-xl font-bold text-white">{monthNames[month]} {year}</h2>
+            <h2 className="text-xl font-bold text-white">
+              {monthNames[month]} {year}
+            </h2>
             <button onClick={nextMonth} type="button" className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -269,7 +291,6 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
             const hasEvents: boolean = !!dayData.event;
             const eventType: EventType | undefined = dayData.event?.type;
             const colors = eventType ? eventColors[eventType] : undefined;
-            const selected: boolean = isSelected(day);
             const today: boolean = isToday(day);
             const timeSlots: TimeSlot[] = dayData.timeSlots;
             const availableSlots: TimeSlot[] = timeSlots.filter((slot: TimeSlot) => slot.available);
@@ -279,36 +300,35 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
             return (
               <div key={day} className="relative group" data-calendar-day>
                 <button
-                  onClick={(e) => handleDayInteraction(day, e)}
+                  onClick={(e) => handleDayClick(day, e)}
                   type="button"
                   className={`min-h-[70px] md:min-h-[100px] p-2 border-b border-r border-gray-100 transition relative flex flex-col w-full text-left
-                    ${selected
-                      ? 'bg-gray-800 text-white'
-                      : hasEvents && colors
-                        ? `${colors.light} hover:${colors.bg} ${colors.text}`
-                        : 'bg-white hover:bg-gray-50 text-gray-700'}
-                    ${today && !selected ? 'ring-2 ring-blue-500 ring-inset' : ''}
+                    ${hasEvents && colors
+                      ? `${colors.light} hover:${colors.bg} ${colors.text}`
+                      : 'bg-white hover:bg-gray-50 text-gray-700'}
+                    ${today ? 'ring-2 ring-blue-500 ring-inset' : ''}
                     ${index % 7 === 6 ? 'border-r-0' : ''}
+                    ${isMobile && availableSlots.length > 0 ? 'cursor-pointer' : 'cursor-default'}
                   `}
                 >
-                  <span className={`text-sm font-medium self-start ${selected ? 'text-white' : ''}`}>
+                  <span className="text-sm font-medium self-start text-gray-900">
                     {day}
                   </span>
-
-                  {hasEvents && dayData.event && !selected && (
+                  
+                  {hasEvents && dayData.event && (
                     <>
                       <div className={`mt-1 w-full h-1.5 rounded ${colors?.bg}`} />
-                      <span className="text-xs mt-1 truncate max-w-full">
+                      <span className="text-xs mt-1 truncate max-w-full text-gray-700">
                         {dayData.event.title}
                       </span>
                     </>
                   )}
-
-                  {today && !selected && (
+                  
+                  {today && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
                   )}
 
-                  {!selected && availableSlots.length > 0 && (
+                  {availableSlots.length > 0 && (
                     <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -345,23 +365,13 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
                         </button>
                       )}
                     </div>
-
+                    
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {timeSlots.map((slot: TimeSlot) => (
                         <button
                           key={slot.id}
                           type="button"
-                          onClick={(e) => {
-                            console.log({ slot });
-
-                            e.stopPropagation();
-                            if (slot.available) {
-                              const date = new Date(year, month, day);
-                              setValue({ date, eventType });
-                              setSelectedDate(date);
-                              if (isMobile) closeTooltip();
-                            }
-                          }}
+                          onClick={(e) => handleTimeSlotClick(day, slot, e)}
                           disabled={!slot.available}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded text-left
                             ${slot.available
@@ -384,7 +394,7 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
                         </button>
                       ))}
                     </div>
-
+                    
                     <div className={`absolute ${tooltipPos.arrow} border-4 border-transparent`} />
                   </div>
                 )}
@@ -411,27 +421,6 @@ export default function ColoredCalendar({ setValue }: ColoredCalendarProps) {
             ))}
           </div>
         </div>
-
-        {/* Выбранная дата */}
-        {selectedDate && (
-          <div className="px-4 py-4 bg-blue-50 border-t border-blue-200">
-            <p className="text-sm text-gray-600">
-              Выбрано:{' '}
-              <span className="font-semibold text-gray-800">
-                {selectedDate.toLocaleDateString('ru-RU', {
-                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                })}
-              </span>
-            </p>
-            <button
-              type="button"
-              onClick={() => setSelectedDate(null)}
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-            >
-              Снять выделение
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

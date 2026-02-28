@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import HookFormCalendar from './calendar';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
+dayjs.locale('ru');
+
 
 export default function HookForm() {
   const {
@@ -79,7 +82,7 @@ export default function HookForm() {
 
           <tr className="hover:bg-gray-50 transition">
             <td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Время:</td>
-            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(time).isValid() && dayjs(time).format('DD.MM.YYYY')}</td>
+            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(time).isValid() && <>{dayjs(time).format('HH:mm')}</>}</td>
           </tr>
 
           {/* {date && } */}
@@ -89,11 +92,11 @@ export default function HookForm() {
       {(() => {
         if (state === 'addedServiceType') {
           return <>
-            Наведите на интересующую дату и выберите свободное время
-            <HookFormCalendar setValue={(a: any) => {
-              console.log('setValue', a);
-              // setState('addDate')
-              setValue('date', a.date);
+            Выберите подходящую дату и время
+            <HookFormCalendar getDateTime={(value: any) => {
+              setValue('date', value);
+              setValue('time', value);
+              setState('addDate')
 
             }} />
           </>
@@ -122,7 +125,7 @@ export default function HookForm() {
                   ))}
                 </select>
 
-
+                <div className='mt-2'></div>
                 <button
                   type="button"
                   // disabled={isSubmitting}
