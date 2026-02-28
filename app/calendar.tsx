@@ -57,6 +57,8 @@ export default function ColoredCalendar() {
       { id: '4', date: `${currentYear}-${currentMonth}-15`, type: 'birthday', title: 'День рождения' },
       { id: '5', date: `${currentYear}-${currentMonth}-20`, type: 'vacation', title: 'Отпуск' },
       { id: '6', date: `${currentYear}-${currentMonth}-25`, type: 'meeting', title: 'Презентация' },
+      { id: '7', date: `${currentYear}-${currentMonth}-31`, type: 'meeting', title: 'Ситуация' },
+
     ];
   }, [year, month]);
 
@@ -96,7 +98,9 @@ export default function ColoredCalendar() {
   };
 
   // 🔹 Клик по дате
-  const handleDateClick = (day: number): void => {
+  const handleDateClick = (day: number, eventType: any): void => {
+    console.log({ day, eventType });
+
     setSelectedDate(new Date(year, month, day));
   };
 
@@ -152,7 +156,7 @@ export default function ColoredCalendar() {
         <div className="grid grid-cols-7">
           {allDays.map((day: number | null, index: number) => {
             if (!day) {
-              return <div key={`empty-${index}`} className="min-h-[70px] md:min-h-[100px]" />;
+              return <div key={`empty-${index}`} className="min-h-[70px] md:min-h-[100px]" />
             }
 
             const dayEvents: CalendarEvent[] = getEventsForDay(day);
@@ -166,7 +170,7 @@ export default function ColoredCalendar() {
             return (
               <button
                 key={day}
-                onClick={() => handleDateClick(day)}
+                onClick={() => handleDateClick(day, eventType)}
                 type="button"
                 className={`min-h-[70px] md:min-h-[100px] p-2 border-b border-r border-gray-100 transition relative flex flex-col
                   ${hasEvents
