@@ -35,7 +35,7 @@ const monthNames: string[] = [
 
 const dayNames: string[] = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
-export default function ColoredCalendar() {
+export default function ColoredCalendar(props: { setValue: Function }) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null); // ✅ null по умолчанию
 
@@ -99,9 +99,18 @@ export default function ColoredCalendar() {
 
   // 🔹 Клик по дате
   const handleDateClick = (day: number, eventType: any): void => {
-    console.log({ day, eventType });
+    // console.log({ day, eventType });
+    if (!eventType) {
+      console.log('стояночка');
 
-    setSelectedDate(new Date(year, month, day));
+      return;
+    }
+
+    var date = new Date(year, month, day);
+
+    props.setValue({ date, eventType })
+
+    setSelectedDate(date);
   };
 
   // 🔹 Массивы дней
