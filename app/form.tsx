@@ -25,7 +25,7 @@ export default function HookForm() {
 
   const tyypes = ['init', 'addedServiceType', 'addDate'];
 
-  const [state, setState] = useState(tyypes[1]);
+  const [state, setState] = useState(tyypes[0]);
 
   const date: string = watch('date');
   const time: string = watch('time');
@@ -89,7 +89,7 @@ export default function HookForm() {
       {(() => {
         if (state === 'addedServiceType') {
           return <>
-            Выберите дату
+            Наведите на интересующую дату и выберите свободное время
             <HookFormCalendar setValue={(a: any) => {
               console.log('setValue', a);
               // setState('addDate')
