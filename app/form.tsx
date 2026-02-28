@@ -56,7 +56,7 @@ export default function HookForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md space-y-5">
-      <h2 className="text-2xl font-bold text-gray-800 text-center m-0">
+      <h2 className="text-2xl font-bold text-gray-800 m-0">
         Запись
         {/* <div>usernameValue: {dayjs(date).format('DD.MM.YYYY')}</div> */}
 
