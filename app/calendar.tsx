@@ -1,10 +1,12 @@
+"use client"
+
 // components/ColoredCalendar.tsx
 import { useState, useMemo, useEffect } from 'react';
 
 // 🔹 Типы
 interface CalendarEvent {
   id: string;
-  date: string;
+  date: string; // YYYY-MM-DD
   type: EventType;
   title: string;
 }
@@ -12,12 +14,16 @@ interface CalendarEvent {
 type EventType = 'meeting' | 'deadline' | 'holiday' | 'birthday' | 'vacation';
 
 interface EventColors {
-  [key: string]: { bg: string; light: string; text: string };
+  [key: string]: {
+    bg: string;
+    light: string;
+    text: string;
+  };
 }
 
 interface FreeTimeSlot {
-  start: string;
-  end: string;
+  start: string; // "09:00"
+  end: string;   // "12:00"
   available: boolean;
 }
 
@@ -150,24 +156,75 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
 
   const closeTooltip = () => setOpenTooltipDay(null);
 
+  // 🔹 Умное позиционирование tooltip
+  const getTooltipPosition = (index: number): { container: string; arrow: string } => {
+    const isEdgeLeft = index % 7 === 0;      // Первый столбец (Вс)
+    const isEdgeRight = index % 7 === 6;     // Последний столбец (Сб)
+    const isTopRow = index < 7;              // Первая строка
+    const isBottomRow = index >= 35;         // Последняя строка (5-я неделя)
+
+    // Левый край — показываем справа
+    if (isEdgeLeft && !isEdgeRight) {
+      return {
+        container: 'left-full top-0 ml-2',
+        arrow: 'left-full top-4 -translate-x-1/2 border-l-gray-800'
+      };
+    }
+    
+    // Правый край — показываем слева
+    if (isEdgeRight) {
+      return {
+        container: 'right-full top-0 mr-2',
+        arrow: 'right-full top-4 translate-x-1/2 border-r-gray-800'
+      };
+    }
+    
+    // Нижний край — показываем сверху
+    if (isBottomRow) {
+      return {
+        container: 'top-full left-1/2 -translate-x-1/2 mt-2',
+        arrow: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-800'
+      };
+    }
+    
+    // По умолчанию — показываем сверху
+    return {
+      container: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+      arrow: 'top-full left-1/2 -translate-x-1/2 border-t-gray-800'
+    };
+  };
+
   const emptyDays: (null | undefined)[] = Array(firstDayOfMonth).fill(null);
   const days: number[] = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const allDays:any[] = [...emptyDays, ...days];
+  const allDays: any[] = [...emptyDays, ...days];
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-
+      {/* 🔹 УБРАЛИ overflow-hidden — tooltip должен выходить за границы */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-200">
+        
         {/* Заголовок */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4">
           <div className="flex items-center justify-between">
-            <button onClick={prevMonth} type="button" className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white">
+            <button
+              onClick={prevMonth}
+              type="button"
+              className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-xl font-bold text-white">{monthNames[month]} {year}</h2>
-            <button onClick={nextMonth} type="button" className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white">
+            
+            <h2 className="text-xl font-bold text-white">
+              {monthNames[month]} {year}
+            </h2>
+            
+            <button
+              onClick={nextMonth}
+              type="button"
+              className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -178,35 +235,42 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
         {/* Дни недели */}
         <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
           {dayNames.map((day) => (
-            <div key={day} className="py-3 text-center text-sm font-semibold text-gray-600">
+            <div
+              key={day}
+              className="py-3 text-center text-sm font-semibold text-gray-600"
+            >
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
           ))}
         </div>
 
-        {/* Дни месяца */}
-        <div className="grid grid-cols-7">
+        {/* Дни месяца с умным позиционированием tooltip */}
+        <div className="grid grid-cols-7 p-2">
+          {/* 🔹 p-2 добавляет отступ чтобы tooltip не прилипал к краю */}
           {allDays.map((day: number | null, index: number) => {
-            if (!day) return <div key={`empty-${index}`} className="min-h-[70px] md:min-h-[100px]" />;
+            if (!day) {
+              return <div key={`empty-${index}`} className="min-h-[70px] md:min-h-[100px]" />;
+            }
 
-            // ✅ ОБЯЗАТЕЛЬНО: Объявляем переменные ЗДЕСЬ перед использованием
+            // 🔹 Объявляем ВСЕ переменные перед return
             const dayEvents: CalendarEvent[] = getEventsForDay(day);
             const hasEvents: boolean = dayEvents.length > 0;
             const eventType: EventType | undefined = hasEvents ? dayEvents[0].type : undefined;
             const colors: EventColors[string] | undefined = eventType ? eventColors[eventType] : undefined;
             const selected: boolean = isSelected(day);
             const today: boolean = isToday(day);
-            
-            // ✅ ВОТ ЭТА СТРОКА БЫЛА ПРОПУЩЕНА:
             const freeSlots: FreeTimeSlot[] = getFreeSlotsForDay(day);
             const availableSlots: FreeTimeSlot[] = freeSlots.filter((slot: FreeTimeSlot) => slot.available);
-            
             const isTooltipOpen: boolean = isMobile ? openTooltipDay === day : false;
+            
+            // 🔹 Получаем умную позицию для этого дня
+            const tooltipPos = getTooltipPosition(index);
 
             return (
-              <div 
-                key={day} 
+              // 🔹 Контейнер с group для CSS hover
+              <div
+                key={day}
                 className="relative group"
                 data-calendar-day
               >
@@ -214,9 +278,9 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                   onClick={(e) => handleDayInteraction(day, eventType, e)}
                   type="button"
                   className={`min-h-[70px] md:min-h-[100px] p-2 border-b border-r border-gray-100 transition relative flex flex-col w-full text-left
-                    ${selected 
-                      ? 'bg-gray-800 text-white' 
-                      : hasEvents 
+                    ${selected
+                      ? 'bg-gray-800 text-white'
+                      : hasEvents
                         ? `${colors?.light} hover:${colors?.bg} ${colors?.text}`
                         : 'bg-white hover:bg-gray-50 text-gray-700'}
                     ${today && !selected ? 'ring-2 ring-blue-500 ring-inset' : ''}
@@ -227,6 +291,7 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                     {day}
                   </span>
                   
+                  {/* Индикатор события */}
                   {hasEvents && !selected && (
                     <>
                       <div className={`mt-1 w-full h-1.5 rounded ${colors?.bg}`} />
@@ -239,11 +304,12 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                     </>
                   )}
                   
+                  {/* Индикатор сегодня */}
                   {today && !selected && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
                   )}
 
-                  {/* Индикатор слотов */}
+                  {/* Индикатор доступных слотов */}
                   {!selected && availableSlots.length > 0 && (
                     <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,20 +320,21 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                   )}
                 </button>
 
-                {/* Tooltip */}
+                {/* 🔹 Tooltip с умным позиционированием */}
                 {availableSlots.length > 0 && (
                   <div
-                    className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 
-                      w-64 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-xl z-50
+                    className={`absolute ${tooltipPos.container}
+                      w-64 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-xl z-[100]
                       transition-all duration-200
-                      ${isMobile 
-                        ? (isTooltipOpen 
-                          ? 'opacity-100 visible translate-y-0' 
+                      ${isMobile
+                        ? (isTooltipOpen
+                          ? 'opacity-100 visible translate-y-0'
                           : 'opacity-0 invisible translate-y-2 pointer-events-none')
                         : 'opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
                       }
                     `}
                   >
+                    {/* Заголовок tooltip */}
                     <div className="font-semibold mb-2 pb-2 border-b border-gray-700 flex items-center justify-between">
                       <span>{day} {monthNames[month]}</span>
                       {isMobile && (
@@ -283,6 +350,7 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                       )}
                     </div>
                     
+                    {/* Список слотов */}
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {freeSlots.map((slot, idx) => (
                         <button
@@ -299,8 +367,8 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                           }}
                           disabled={!slot.available}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded text-left
-                            ${slot.available 
-                              ? 'bg-green-600/30 hover:bg-green-600/50 text-green-100 cursor-pointer' 
+                            ${slot.available
+                              ? 'bg-green-600/30 hover:bg-green-600/50 text-green-100 cursor-pointer'
                               : 'bg-gray-700/50 text-gray-400 cursor-not-allowed'}`}
                         >
                           <span className="text-xs font-mono">
@@ -320,7 +388,8 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
                       ))}
                     </div>
                     
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
+                    {/* 🔹 Стрелочка с умной позицией */}
+                    <div className={`absolute ${tooltipPos.arrow} border-4 border-transparent`} />
                   </div>
                 )}
               </div>
@@ -332,7 +401,7 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
         <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">События:</h3>
           <div className="flex flex-wrap gap-3">
-            {Object.entries(eventColors).map(([type, colors]) => (
+            {Object.entries(eventColors).map(([type, colors]: [string, EventColors[string]]) => (
               <div key={type} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded ${colors.bg}`} />
                 <span className="text-sm text-gray-600">
@@ -354,7 +423,10 @@ export default function ColoredCalendar(props: { setValue: (data: { date: Date; 
               Выбрано:{' '}
               <span className="font-semibold text-gray-800">
                 {selectedDate.toLocaleDateString('ru-RU', {
-                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
                 })}
               </span>
             </p>
