@@ -64,27 +64,27 @@ export default function HookForm() {
       <table className='min-w-low bg-white border border-gray-200'>
         <tbody>
           <tr className="hover:bg-gray-50 transition">
-            <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>state</th>
-            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{state}</td>
+            <th className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>state</th>
+            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{state}</td>
           </tr>
 
           <tr className="hover:bg-gray-50 transition">
-            <td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Услуга:</td>
-            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{service}</td>
-          </tr>
-
-          {/* {service && } */}
-
-          <tr className="hover:bg-gray-50 transition">
-            <td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Дата:</td>
-            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(date).isValid() && dayjs(date).format('DD.MM.YYYY')}</td>
+            <td className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Услуга:</td>
+            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{service}</td>
           </tr>
 
           {/* {service && } */}
 
           <tr className="hover:bg-gray-50 transition">
-            <td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Время:</td>
-            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(time).isValid() && <>{dayjs(time).format('HH:mm')}</>}</td>
+            <td className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Дата:</td>
+            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{dayjs(date).isValid() && dayjs(date).format('DD.MM.YYYY')}</td>
+          </tr>
+
+          {/* {service && } */}
+
+          <tr className="hover:bg-gray-50 transition">
+            <td className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Время:</td>
+            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{dayjs(time).isValid() && <>{dayjs(time).format('HH:mm')}</>}</td>
           </tr>
 
           {/* {date && } */}

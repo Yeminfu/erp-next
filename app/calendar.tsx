@@ -246,7 +246,7 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
   const allDays: (number | null)[] = [...emptyDays, ...calendarDays.map(d => d.day)];
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4">
+    <div className="w-full max-w-4xl mx-auto mt-4">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200">
         
         {/* Заголовок */}
