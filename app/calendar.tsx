@@ -1,5 +1,5 @@
 // components/ColoredCalendar.tsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from 'react';
 
 // 🔹 Типы
 interface CalendarEvent {
@@ -176,10 +176,28 @@ export default function ColoredCalendar(props: { setValue: Function }) {
             const selected: boolean = isSelected(day);
             const today: boolean = isToday(day);
 
+            if (1) return <>
+              <CalendarDayButton day={day} hasEvents={hasEvents} colors={colors} today={today} selected={selected} dayEvents={dayEvents} />
+            </>
+
             return (
               <button
                 key={day}
-                onClick={() => handleDateClick(day, eventType)}
+                onMouseOver={() => {
+                  console.log('over');
+                  // alert('over');
+
+                }}
+                onMouseLeave={() => {
+                  console.log('leave');
+                  // alert('leave');
+
+
+                }}
+                onClick={() => {
+                  // alert()
+                  // handleDateClick(day, eventType)
+                }}
                 type="button"
                 className={`min-h-[70px] md:min-h-[100px] p-2 border-b border-r border-gray-100 transition relative flex flex-col
                   ${hasEvents
@@ -260,4 +278,60 @@ export default function ColoredCalendar(props: { setValue: Function }) {
       </div>
     </div>
   );
+}
+
+
+function CalendarDayButton(props: { day: number; hasEvents: any; colors: EventColors[string] | undefined; today: any; selected: any; dayEvents: string | any[]; }) {
+  return <>
+
+    <button
+      // key={props.day}
+      onMouseOver={() => {
+        console.log('over');
+        // alert('over');
+
+      }}
+      onMouseLeave={() => {
+        console.log('leave');
+        // alert('leave');
+
+      }}
+      onClick={() => {
+        // alert()
+        // handleDateClick(day, eventType)
+      }}
+      type="button"
+      className={`min-h-[70px] md:min-h-[100px] p-2 border-b border-r border-gray-100 transition relative flex flex-col
+                  ${props.hasEvents
+          ? `${props.colors?.light} hover:${props.colors?.bg} ${props.colors?.text}`  // ✅ Цветная заливка
+          : 'bg-white hover:bg-gray-50 text-gray-700'
+        }  // ✅ Обычный день
+                  ${props.today && !props.selected
+          ? 'ring-2 ring-blue-500 ring-inset'
+          : ''
+        }
+                `}
+    >
+      <span className={`text-sm font-medium self-start }`}>
+        {props.day}
+      </span>
+
+      {/* ✅ Индикатор события */}
+      {props.hasEvents && !props.selected && (
+        <>
+          <div className={`mt-1 w-full h-1.5 rounded ${props.colors?.bg}`} />
+          <span className="text-xs mt-1 truncate max-w-full">
+            {props.dayEvents[0].title}
+          </span>
+          {props.dayEvents.length > 1 && (
+            <span className="text-xs text-gray-500">+{props.dayEvents.length - 1}</span>
+          )}
+        </>
+      )}
+
+      {/* ✅ Индикатор сегодня */}
+      {props.today && !props.selected && (
+        <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
+      )}
+    </button></>
 }

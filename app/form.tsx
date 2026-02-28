@@ -18,18 +18,20 @@ export default function HookForm() {
       service: '',
       // bot_name: '',
       // token: "8793190049:AAGCfP_gmNH1GVssWSZt2KeB4ApjMQmpRoc",
-      date: ''
+      date: '',
+      time: '',
     }
   });
 
   const tyypes = ['init', 'addedServiceType', 'addDate'];
 
-  const [state, setState] = useState(tyypes[0]);
+  const [state, setState] = useState(tyypes[1]);
 
   const date: string = watch('date');
+  const time: string = watch('time');
+
 
   const service: string = watch('service');
-
 
   // Валидация с правилами
   const onSubmit = async (data: any) => {
@@ -68,13 +70,19 @@ export default function HookForm() {
 
           {/* {service && } */}
 
-          <tr className="hover:bg-gray-50 transition"><td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Дата:</td><td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(date).isValid() && dayjs(date).format('DD.MM.YYYY')}</td></tr>
+          <tr className="hover:bg-gray-50 transition">
+            <td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Дата:</td>
+            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(date).isValid() && dayjs(date).format('DD.MM.YYYY')}</td>
+          </tr>
+
+          {/* {service && } */}
+
+          <tr className="hover:bg-gray-50 transition">
+            <td className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Время:</td>
+            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900"'>{dayjs(time).isValid() && dayjs(time).format('DD.MM.YYYY')}</td>
+          </tr>
 
           {/* {date && } */}
-
-
-
-
         </tbody>
       </table>
 
@@ -85,7 +93,7 @@ export default function HookForm() {
             <HookFormCalendar setValue={(a: any) => {
               console.log('setValue', a);
               setState('addDate')
-              setValue('date', a.date)
+              setValue('date', a.date);
 
             }} />
           </>
