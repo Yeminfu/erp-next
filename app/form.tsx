@@ -92,7 +92,7 @@ export default function HookForm() {
             Выберите дату
             <HookFormCalendar setValue={(a: any) => {
               console.log('setValue', a);
-              setState('addDate')
+              // setState('addDate')
               setValue('date', a.date);
 
             }} />
