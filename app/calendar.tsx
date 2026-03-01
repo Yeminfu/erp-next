@@ -315,27 +315,27 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
                     {day}
                   </span>
                   
-                  {hasEvents && dayData.event && (
+                  {/* {hasEvents && dayData.event && (
                     <>
                       <div className={`mt-1 w-full h-1.5 rounded ${colors?.bg}`} />
                       <span className="text-xs mt-1 truncate max-w-full text-gray-700">
                         {dayData.event.title}
                       </span>
                     </>
-                  )}
+                  )} */}
                   
-                  {today && (
+                  {/* {today && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
-                  )}
+                  )} */}
 
-                  {availableSlots.length > 0 && (
+                  {/* {availableSlots.length > 0 && (
                     <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       {availableSlots.length}
                     </span>
-                  )}
+                  )} */}
                 </button>
 
                 {availableSlots.length > 0 && (

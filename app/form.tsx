@@ -56,8 +56,7 @@ export default function HookForm() {
     try {
       // Имитация API запроса
       // await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Submitted:', JSON.stringify(data, null, 2));
-      alert('ok');
+      alert(JSON.stringify(data, null, 2));
       // alert('✅ Форма отправлена!');
       // reset();
     } catch (error) {
@@ -88,8 +87,6 @@ export default function HookForm() {
         Запись
       </h2> */}
 
-
-
       {(() => {
         if (state === 'addDate') {
           return <>
@@ -105,7 +102,6 @@ export default function HookForm() {
               </div>
 
               <div style={{ height: 20 }}></div>
-
 
               <InfoGrid infoData={infoData} />
 
