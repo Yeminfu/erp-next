@@ -1,11 +1,26 @@
 "use client"
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 // components/HookForm.jsx
 import { useForm } from 'react-hook-form';
 import HookFormCalendar from './calendar';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 dayjs.locale('ru');
+
+
+
+// components/InfoGrid.tsx
+interface InfoRow {
+  label: string;
+  value: string;
+}
+
+const services = [
+
+  { value: 'cut_women', label: 'Стрижка женская' },
+  { value: 'cut_men', label: 'Стрижка мужская' }
+];
+
 
 
 export default function HookForm() {
@@ -51,51 +66,51 @@ export default function HookForm() {
     }
   };
 
+  console.log(services.find(s => s.value === service)?.label);
+
+
+  const infoData: InfoRow[] = [
+    // { label: 'state', value: 'addDate' },
+    {
+      //@ts-ignore
+      label: 'Услуга', value: services.find(s => s.value === service)?.label
+    },
+    { label: 'Дата:', value: dayjs(date).format('DD.MM.YYYY') },
+    { label: 'Время:', value: dayjs(date).format('HH.mm') },
+  ];
+
   // Наблюдение за полем (для подтверждения пароля)
   // const password = watch('password');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md space-y-5">
-      <h2 className="text-2xl font-bold text-gray-800 m-0">
+      {/* <h2 className="text-2xl font-bold text-gray-800">
         Запись
-        {/* <div>usernameValue: {dayjs(date).format('DD.MM.YYYY')}</div> */}
+      </h2> */}
 
-      </h2>
 
-      <table className='min-w-full bg-white border-collapse border border-slate-1000'>
-        <tbody>
-          <tr className="hover:bg-gray-50 transition">
-            <th className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>state</th>
-            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{state}</td>
-          </tr>
-
-          {service && <tr className="hover:bg-gray-50 transition">
-            <td className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Услуга:</td>
-            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{service}</td>
-          </tr>}
-
-          {/* {service && } */}
-
-          {date && <tr className="hover:bg-gray-50 transition">
-            <td className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Дата:</td>
-            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{dayjs(date).isValid() && dayjs(date).format('DD.MM.YYYY')}</td>
-          </tr>}
-
-          {/* {service && } */}
-
-          {time && <tr className="hover:bg-gray-50 transition">
-            <td className='px-1 py-1  text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>Время:</td>
-            <td className='px-1 py-1  whitespace-nowrap text-sm text-gray-900"'>{dayjs(time).isValid() && <>{dayjs(time).format('HH:mm')}</>}</td>
-          </tr>}
-
-          {/* {date && } */}
-        </tbody>
-      </table>
 
       {(() => {
         if (state === 'addDate') {
           return <>
             <div className="">
+
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-1 py-2">
+                <h2 className="text-md font-bold text-white flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Подтвердите запись
+                </h2>
+              </div>
+
+              <div style={{ height: 20 }}></div>
+
+
+              <InfoGrid infoData={infoData} />
+
+              <div style={{ height: 20 }}></div>
+
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -110,10 +125,10 @@ export default function HookForm() {
                     Отправка...
                   </>
                 ) : (
-                  'Сохранить заявку'
+                  'Подтвердить'
                 )}
               </button>
-              <div style={{ height: 5 }}></div>
+              <div style={{ height: 10 }}></div>
               <button
                 type="button"
                 disabled={isSubmitting}
@@ -122,14 +137,24 @@ export default function HookForm() {
                 }}
                 className="w-full outline-solid outline-red-300 text-red-500 py-1 px-1  rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Заново
+                Отмена
               </button>
             </div>
           </>
         }
         if (state === 'addedServiceType') {
           return <>
-            Выберите подходящую дату и время
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
+              Выберите подходящую дату и время
+            </label> */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-1 py-2">
+              <h2 className="text-md font-bold text-white flex items-center gap-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Выберите дату и время
+              </h2>
+            </div>
             <HookFormCalendar getDateTime={(value: any) => {
               setValue('date', value);
               setValue('time', value);
@@ -140,22 +165,32 @@ export default function HookForm() {
         }
         if (state === 'init') {
           return (function BasicSelect() {
-            const options = [
-              { value: '', label: 'Выберите услугу' },
-              { value: 'cut_women', label: 'Стрижка женская' },
-              { value: 'cut_men', label: 'Стрижка мужская' }
-            ];
+
 
             return <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                {/* <label className="block text-sm font-medium text-gray-700 mb-1">
                   Услуга
-                </label>
+                </label> */}
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-1 py-2">
+                  <h2 className="text-md font-bold text-white flex items-center gap-2">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Выберите услугу
+                  </h2>
+                </div>
+
+                <div style={{ height: 40 }} />
+
                 <select {...register('service')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   defaultValue=""
                 >
-                  {options.map((option) => (
+                  {[
+                    { value: '', label: 'Выберите услугу' },
+                    ...services
+                  ].map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -192,6 +227,8 @@ export default function HookForm() {
       })()}
 
 
+
+
       {/* Кнопка отправки */}
 
       {/* <button
@@ -212,5 +249,42 @@ export default function HookForm() {
         )}
       </button> */}
     </form>
+  );
+}
+
+
+
+export function InfoGrid(props: { infoData: InfoRow[] }) {
+  return (
+    <div className="w-full">
+      {/* 🔹 Grid контейнер */}
+      <div className="grid grid-cols-[max-content_1fr] bg-white border-collapse border border-slate-200">
+
+        {props.infoData.map((row, index) => (
+          <Fragment key={`${row.label}-label`}>
+            {/*  */}
+            {/* Левая колонка — ширина по контенту */}
+            <div
+
+              className={`px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                ${index === 0 ? 'bg-white' : 'bg-gray-50'}
+                hover:bg-gray-50 transition`}
+            >
+              {row.label}
+            </div>
+
+            {/* Правая колонка — оставшаяся ширина */}
+            <div
+              className={`px-4 py-2 whitespace-nowrap text-sm text-gray-900
+                ${index === 0 ? 'bg-white' : 'bg-gray-50'}
+                hover:bg-gray-50 transition`}
+            >
+              {row.value}
+            </div>
+          </Fragment>
+        ))}
+
+      </div>
+    </div>
   );
 }
