@@ -165,8 +165,6 @@ export default function HookForm() {
         }
         if (state === 'init') {
           return (function BasicSelect() {
-
-
             return <>
               <div>
                 {/* <label className="block text-sm font-medium text-gray-700 mb-1">
