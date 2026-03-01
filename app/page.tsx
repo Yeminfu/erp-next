@@ -1,11 +1,12 @@
-import Image from "next/image";
 import HookForm from "./form";
+import Header from "./header";
 
 export default function Home() {
   return (
     <>
-
+      <Header />
       <HookForm />
     </>
   );
 }
+
