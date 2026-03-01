@@ -3,9 +3,38 @@
 import Link from 'next/link';
 // components/SalonHeader.tsx
 import { useEffect, useState } from 'react';
+import { useTelegram } from './telegramProvider';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const { isReady, isInTelegram, user } = useTelegram();
+
+  if (!isReady) {
+    return <div className="p-4">Загрузка...</div>;
+  }
+
+
+  if (!isInTelegram) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-gray-600">Пожалуйста, откройте приложение в Telegram</p>
+      </div>
+    );
+  }
+
+
+
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">
+        👋 Привет, {user?.first_name}!
+      </h1>
+      {user?.username && (
+        <p className="text-gray-500">@{user.username}</p>
+      )}
+    </div>
+  );
 
   const [state, setState] = useState();
 
