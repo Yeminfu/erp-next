@@ -28,7 +28,7 @@ export default function Footer() {
           {/* Контактная информация */}
           <div className="md:text-right">
             <p className="text-sm text-gray-600">
-              📍 г. Хабаровск, Улица Знаменщикова, 51​1 этаж
+              📍 г. Хабаровск, Улица Знаменщикова, 51
             </p>
             <p className="text-sm text-gray-600">
               🕐 Пн — Пт 10:00–20:00
