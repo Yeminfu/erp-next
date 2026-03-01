@@ -83,7 +83,7 @@ export default function HookForm() {
   // const password = watch('password');
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg mx-auto p-6 bg-white rounded-lg space-y-5">
       {/* <h2 className="text-2xl font-bold text-gray-800">
         Запись
       </h2> */}
