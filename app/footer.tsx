@@ -2,7 +2,8 @@
 export default function Footer() {
   return (
     <footer className="w-full bg-gray-50 border-t border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+      
+      <div className="max-w-lg mx-auto p-6 bg-white rounded-lg space-y-5">
 
         {/* 🔹 Основной контент */}
         <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -26,7 +27,7 @@ export default function Footer() {
           <div className="w-full h-px bg-gray-200 md:hidden" />
 
           {/* Контактная информация */}
-          <div className="md:text-right">
+          <div className="">
             <p className="text-sm text-gray-600">
               📍 г. Хабаровск, Улица Знаменщикова, 51
             </p>
