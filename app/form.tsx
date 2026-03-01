@@ -22,7 +22,14 @@ const services = [
 ];
 
 
-
+/**
+ * 
+ * @returns 
+ * Начинаем с init
+ * Выбираем addedServiceType
+ * Выбираем мастера
+ * Добавляем дату
+ */
 export default function HookForm() {
   const {
     register,
