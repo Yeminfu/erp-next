@@ -2,16 +2,27 @@
 
 import Link from 'next/link';
 // components/SalonHeader.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const [state, setState] = useState();
+
+  useEffect(() => {
+    //@ts-ignore
+    setState(window.Telegram?.WebApp)
+
+
+
+
+  }, [])
+
   return (
     <header className="w-full bg-white shadow-lg sticky top-0 z-50">
+          <pre>{JSON.stringify(['window.Telegram?.WebApp', state], null, 2)}</pre>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-
           {/* 🔹 Логотип */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
