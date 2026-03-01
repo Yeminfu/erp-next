@@ -1,3 +1,4 @@
+import Footer from "./footer";
 import HookForm from "./form";
 import Header from "./header";
 
@@ -6,6 +7,7 @@ export default function Home() {
     <>
       <Header />
       <HookForm />
+      <Footer />
     </>
   );
 }

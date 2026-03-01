@@ -317,7 +317,7 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
         </div>
 
         {/* Легенда */}
-        <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
+        {/* <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">События:</h3>
           <div className="flex flex-wrap gap-3">
             {(Object.keys(eventColors) as EventType[]).map((type) => (
@@ -333,7 +333,7 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
