@@ -11,7 +11,7 @@ export default function Header() {
 
   useEffect(() => {
     //@ts-ignore
-    setState(window.Telegram)
+    setState(window.Telegram.WebApp.initDataUnsafe.user.id)
 
 
 
@@ -20,7 +20,19 @@ export default function Header() {
 
   return (
     <header className="w-full bg-white shadow-lg sticky top-0 z-50">
-          <pre>{JSON.stringify(['window.Telegram?.WebApp', state], null, 2)}</pre>
+      <pre>{JSON.stringify(['window.Telegram?.WebApp', state], () => {
+        const seen = new WeakSet();
+        //@ts-ignore
+        return (key, value) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return; // Returns undefined, effectively removing the cyclic reference
+            }
+            seen.add(value);
+          }
+          return value;
+        };
+      })}</pre>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* 🔹 Логотип */}
@@ -127,4 +139,81 @@ export default function Header() {
       </div>
     </header>
   );
+}
+
+
+
+
+
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code: string;
+  is_premium?: boolean;
+  photo_url?: string;
+}
+
+export function useTelegramSafe() {
+  const [isReady, setIsReady] = useState(false);
+  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [isInTelegram, setIsInTelegram] = useState(false);
+
+  useEffect(() => {
+    // 🔹 Проверяем наличие Telegram WebApp
+    const checkTelegram = () => {
+      //@ts-ignore
+      if (window.Telegram?.WebApp) {
+        setIsInTelegram(true);
+
+        // 🔹 Получаем пользователя
+        //@ts-ignore
+        const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+        if (tgUser) {
+          setUser(tgUser as TelegramUser);
+        }
+
+        // 🔹 Сообщаем Telegram, что приложение готово
+        //@ts-ignore
+        window.Telegram.WebApp.ready();
+        //@ts-ignore
+        window.Telegram.WebApp.expand();
+
+        setIsReady(true);
+      } else {
+        // 🔹 Запуск вне Telegram (для разработки)
+        console.warn('⚠️ Telegram WebApp not found. Running in mock mode.');
+        setIsInTelegram(false);
+        setIsReady(true);
+      }
+    };
+
+    // 🔹 Проверяем сразу и при загрузке страницы
+    checkTelegram();
+    if (document.readyState === 'complete') {
+      checkTelegram();
+    } else {
+      window.addEventListener('load', checkTelegram);
+      return () => window.removeEventListener('load', checkTelegram);
+    }
+  }, []);
+
+  return {
+    isReady,
+    isInTelegram,
+    user,
+    userId: user?.id,
+    userName: user?.username,
+    userFullName: user
+      ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`.trim()
+      : null,
+    // 🔹 Безопасные методы
+    //@ts-ignore
+    closeApp: () => window.Telegram?.WebApp?.close(),
+    //@ts-ignore
+    showAlert: (msg: string) => window.Telegram?.WebApp?.showAlert(msg),
+    //@ts-ignore
+    openLink: (url: string) => window.Telegram?.WebApp?.openLink(url),
+  };
 }
