@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 // components/SalonHeader.tsx
-import { useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -144,76 +144,92 @@ export default function Header() {
 
 
 
-
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code: string;
-  is_premium?: boolean;
-  photo_url?: string;
+interface TelegramContextType {
+  isReady: boolean;
+  isInTelegram: boolean;
+  user: any | null;
+  error: string | null;
+  webApp: any | null;
 }
 
-export function useTelegramSafe() {
+const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
+
+export function TelegramProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
-  const [user, setUser] = useState<TelegramUser | null>(null);
   const [isInTelegram, setIsInTelegram] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [webApp, setWebApp] = useState<any>(null);
 
   useEffect(() => {
-    // 🔹 Проверяем наличие Telegram WebApp
-    const checkTelegram = () => {
-      //@ts-ignore
-      if (window.Telegram?.WebApp) {
-        setIsInTelegram(true);
-
-        // 🔹 Получаем пользователя
+    const initTelegram = async () => {
+      try {
+        // 🔹 Ждём загрузки скрипта если нужно
         //@ts-ignore
-        const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
-        if (tgUser) {
-          setUser(tgUser as TelegramUser);
+        if (!window.Telegram?.WebApp) {
+          alert('yoyoyo')
+          await new Promise<void>((resolve, reject) => {
+            if (document.querySelector('script[src*="telegram-web-app.js"]')) {
+              // Скрипт уже есть, ждём немного
+              setTimeout(resolve, 100);
+            } else {
+              // Динамически добавляем скрипт
+              const script = document.createElement('script');
+              script.src = 'https://telegram.org/js/telegram-web-app.js';
+              script.async = true;
+              script.onload = () => resolve();
+              script.onerror = () => reject(new Error('Failed to load Telegram script'));
+              document.head.appendChild(script);
+            }
+          });
         }
 
-        // 🔹 Сообщаем Telegram, что приложение готово
+        // 🔹 Проверяем наличие WebApp
         //@ts-ignore
-        window.Telegram.WebApp.ready();
-        //@ts-ignore
-        window.Telegram.WebApp.expand();
+        if (window.Telegram?.WebApp) {
+          setIsInTelegram(true);
+          //@ts-ignore
+          setWebApp(window.Telegram.WebApp);
+
+          // 🔹 Получаем пользователя
+          //@ts-ignore
+          const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+          if (tgUser) {
+            setUser(tgUser);
+          }
+
+          // 🔹 Инициализируем
+          //@ts-ignore
+          window.Telegram.WebApp.ready();
+          //@ts-ignore
+          window.Telegram.WebApp.expand();
+        } else {
+          console.warn('⚠️ Running outside Telegram. Some features may not work.');
+          setIsInTelegram(false);
+        }
 
         setIsReady(true);
-      } else {
-        // 🔹 Запуск вне Telegram (для разработки)
-        console.warn('⚠️ Telegram WebApp not found. Running in mock mode.');
-        setIsInTelegram(false);
+      } catch (err) {
+        console.error('Telegram init error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
         setIsReady(true);
       }
     };
 
-    // 🔹 Проверяем сразу и при загрузке страницы
-    checkTelegram();
-    if (document.readyState === 'complete') {
-      checkTelegram();
-    } else {
-      window.addEventListener('load', checkTelegram);
-      return () => window.removeEventListener('load', checkTelegram);
-    }
+    initTelegram();
   }, []);
 
-  return {
-    isReady,
-    isInTelegram,
-    user,
-    userId: user?.id,
-    userName: user?.username,
-    userFullName: user
-      ? `${user.first_name}${user.last_name ? ` ${user.last_name}` : ''}`.trim()
-      : null,
-    // 🔹 Безопасные методы
-    //@ts-ignore
-    closeApp: () => window.Telegram?.WebApp?.close(),
-    //@ts-ignore
-    showAlert: (msg: string) => window.Telegram?.WebApp?.showAlert(msg),
-    //@ts-ignore
-    openLink: (url: string) => window.Telegram?.WebApp?.openLink(url),
-  };
+  return (
+    <TelegramContext.Provider value={{ isReady, isInTelegram, user, error, webApp }}>
+      {children}
+    </TelegramContext.Provider>
+  );
+}
+
+export function useTelegram() {
+  const context = useContext(TelegramContext);
+  if (context === undefined) {
+    throw new Error('useTelegram must be used within TelegramProvider');
+  }
+  return context;
 }
