@@ -32,11 +32,10 @@ interface CalendarDay {
   timeSlots: TimeSlot[];
 }
 
-// 🔹 Тип для объекта даты и времени
 interface DateTimeValue {
-  date: Dayjs | Date;  // dayjs объект или Date
-  time: string;         // "09:00"
-  datetime: Dayjs;      // Полный dayjs объект с датой и временем
+  date: Dayjs | Date;
+  time: string;
+  datetime: Dayjs;
 }
 
 interface EventColors {
@@ -60,16 +59,16 @@ const monthNames: string[] = [
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
 ];
 
-const dayNames: string[] = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+// 🔹 ИЗМЕНЕНИЕ 1: Неделя начинается с понедельника
+const dayNames: string[] = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-// 🔹 Генерация дней месяца с dayjs
 const generateCalendarDays = (year: number, month: number): CalendarDay[] => {
   const daysInMonth = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-01`).daysInMonth();
   const days: CalendarDay[] = [];
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`).format('YYYY-MM-DD');
-    
+
     const timeSlots: TimeSlot[] = [
       { id: `${dateStr}-slot-1`, start: '09:00', end: '11:00', available: day % 3 !== 0 },
       { id: `${dateStr}-slot-2`, start: '11:00', end: '13:00', available: day % 2 === 0 },
@@ -87,20 +86,14 @@ const generateCalendarDays = (year: number, month: number): CalendarDay[] => {
     else if (day === 25) event = { id: '6', type: 'meeting', title: 'Презентация' };
     else if (day === 31) event = { id: '7', type: 'meeting', title: 'Ситуация' };
 
-    days.push({
-      day,
-      date: dateStr,
-      event,
-      timeSlots,
-    });
+    days.push({ day, date: dateStr, event, timeSlots });
   }
 
   return days;
 };
 
 interface ColoredCalendarProps {
-  // 🔹 setValue получает объект с датой и временем
-  getDateTime: (value: DateTimeValue) => void;
+  getDateTime: (value: Dayjs) => void;
 }
 
 export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
@@ -111,13 +104,16 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
   const year: number = currentDate.year();
   const month: number = currentDate.month();
 
+  // 🔹 ИЗМЕНЕНИЕ 2: Расчёт первого дня месяца с понедельника
+  // dayjs.day(): 0=Вс, 1=Пн, 2=Вт, ..., 6=Сб
+  // Нам нужно: Пн=0, Вт=1, ..., Вс=6
   const firstDayOfMonth: number = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-01`).day();
+  const firstDayIndex: number = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
   const calendarDays: CalendarDay[] = useMemo(() => {
     return generateCalendarDays(year, month);
   }, [year, month]);
 
-  // 🔹 Определяем мобильное устройство
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
@@ -127,17 +123,16 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 🔹 Закрытие tooltip при клике вне
   useEffect(() => {
     if (!isMobile || openTooltipDay === null) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('[data-calendar-day]')) {
         setOpenTooltipDay(null);
       }
     };
-    
+
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isMobile, openTooltipDay]);
@@ -158,50 +153,36 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
     setCurrentDate(currentDate.add(1, 'month'));
   };
 
-  // 🔹 Клик по дню — ТОЛЬКО открывает tooltip на мобильном
   const handleDayClick = (day: number, e?: React.MouseEvent): void => {
     if (isMobile) {
       e?.stopPropagation();
       const dayData = getDayData(day);
       const hasFreeSlots = dayData?.timeSlots.some(s => s.available);
-      
+
       if (hasFreeSlots && openTooltipDay !== day) {
         setOpenTooltipDay(day);
         return;
       }
-      
       setOpenTooltipDay(null);
     }
   };
 
-  // 🔹 Клик по времени — вызывает setValue с объектом { date, time, datetime }
   const handleTimeSlotClick = (day: number, slot: TimeSlot, e: React.MouseEvent): void => {
     e.stopPropagation();
-    
     if (!slot.available) return;
-    
-    // 🔹 Создаём dayjs объект с датой
+
     const dateDayjs = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
-    
-    // 🔹 Создаём dayjs объект с датой и временем
     const datetimeDayjs = dayjs(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')} ${slot.start}`, 'YYYY-MM-DD HH:mm');
-    
-    // 🔹 Формируем объект для setValue
+
     const dateTimeValue: DateTimeValue = {
-      date: dateDayjs,        // dayjs объект с датой
-      time: slot.start,       // строка времени "09:00"
-      datetime: datetimeDayjs, // полный dayjs объект с датой и временем
+      date: dateDayjs,
+      time: slot.start,
+      datetime: datetimeDayjs,
     };
-    console.log({dateTimeValue});
-    
-    // ✅ Вызываем setValue ОДИН раз с объектом
-    //@ts-ignore
-    getDateTime( dateTimeValue.datetime);
-    
-    // Закрываем tooltip на мобильном
-    if (isMobile) {
-      closeTooltip();
-    }
+
+    getDateTime(dateTimeValue.datetime);
+
+    if (isMobile) closeTooltip();
   };
 
   const closeTooltip = (): void => {
@@ -211,44 +192,30 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
   const getTooltipPosition = (index: number): { container: string; arrow: string } => {
     const isEdgeLeft = index % 7 === 0;
     const isEdgeRight = index % 7 === 6;
-    const totalCells = calendarDays.length + firstDayOfMonth;
+    const totalCells = calendarDays.length + firstDayIndex;
     const isBottomRow = index >= totalCells - 7;
 
     if (isEdgeLeft && !isEdgeRight) {
-      return {
-        container: 'left-full top-0 ml-2',
-        arrow: 'left-full top-4 -translate-x-1/2 border-l-gray-800'
-      };
+      return { container: 'left-full top-0 ml-2', arrow: 'left-full top-4 -translate-x-1/2 border-l-gray-800' };
     }
-    
     if (isEdgeRight) {
-      return {
-        container: 'right-full top-0 mr-2',
-        arrow: 'right-full top-4 translate-x-1/2 border-r-gray-800'
-      };
+      return { container: 'right-full top-0 mr-2', arrow: 'right-full top-4 translate-x-1/2 border-r-gray-800' };
     }
-    
     if (isBottomRow) {
-      return {
-        container: 'top-full left-1/2 -translate-x-1/2 mt-2',
-        arrow: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-800'
-      };
+      return { container: 'top-full left-1/2 -translate-x-1/2 mt-2', arrow: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-800' };
     }
-    
-    return {
-      container: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
-      arrow: 'top-full left-1/2 -translate-x-1/2 border-t-gray-800'
-    };
+    return { container: 'bottom-full left-1/2 -translate-x-1/2 mb-2', arrow: 'top-full left-1/2 -translate-x-1/2 border-t-gray-800' };
   };
 
-  const emptyDays: (null | undefined)[] = Array(firstDayOfMonth).fill(null);
+  // 🔹 ИЗМЕНЕНИЕ 3: Используем firstDayIndex вместо firstDayOfMonth
+  const emptyDays: (null | undefined)[] = Array(firstDayIndex).fill(null);
   //@ts-ignore
   const allDays: (number | null)[] = [...emptyDays, ...calendarDays.map(d => d.day)];
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-4">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-200">
-        
+
         {/* Заголовок */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4">
           <div className="flex items-center justify-between">
@@ -257,9 +224,7 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-xl font-bold text-white">
-              {monthNames[month]} {year}
-            </h2>
+            <h2 className="text-xl font-bold text-white">{monthNames[month]} {year}</h2>
             <button onClick={nextMonth} type="button" className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition text-white">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -268,7 +233,7 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
           </div>
         </div>
 
-        {/* Дни недели */}
+        {/* 🔹 Дни недели (уже с понедельника) */}
         <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
           {dayNames.map((day: string) => (
             <div key={day} className="py-3 text-center text-sm font-semibold text-gray-600">
@@ -281,20 +246,18 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
         {/* Дни месяца */}
         <div className="grid grid-cols-7 p-2">
           {allDays.map((day: number | null, index: number) => {
-            if (!day) {
-              return <div key={`empty-${index}`} className="min-h-[70px] md:min-h-[100px]" />;
-            }
+            if (!day) return <div key={`empty-${index}`} className="min-h-[70px] md:min-h-[100px]" />;
 
-            const dayData: CalendarDay | undefined = getDayData(day);
+            const dayData = getDayData(day);
             if (!dayData) return null;
 
-            const hasEvents: boolean = !!dayData.event;
-            const eventType: EventType | undefined = dayData.event?.type;
+            const hasEvents = !!dayData.event;
+            const eventType = dayData.event?.type;
             const colors = eventType ? eventColors[eventType] : undefined;
-            const today: boolean = isToday(day);
-            const timeSlots: TimeSlot[] = dayData.timeSlots;
-            const availableSlots: TimeSlot[] = timeSlots.filter((slot: TimeSlot) => slot.available);
-            const isTooltipOpen: boolean = isMobile ? openTooltipDay === day : false;
+            const today = isToday(day);
+            const timeSlots = dayData.timeSlots;
+            const availableSlots = timeSlots.filter(slot => slot.available);
+            const isTooltipOpen = isMobile ? openTooltipDay === day : false;
             const tooltipPos = getTooltipPosition(index);
 
             return (
@@ -303,84 +266,37 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
                   onClick={(e) => handleDayClick(day, e)}
                   type="button"
                   className={`min-h-[70px] md:min-h-[100px] p-2 border-b border-r border-gray-100 transition relative flex flex-col w-full text-left
-                    ${hasEvents && colors
-                      ? `${colors.light} hover:${colors.bg} ${colors.text}`
-                      : 'bg-white hover:bg-gray-50 text-gray-700'}
+                    ${hasEvents && colors ? `${colors.light} hover:${colors.bg} ${colors.text}` : 'bg-white hover:bg-gray-50 text-gray-700'}
                     ${today ? 'ring-2 ring-blue-500 ring-inset' : ''}
                     ${index % 7 === 6 ? 'border-r-0' : ''}
                     ${isMobile && availableSlots.length > 0 ? 'cursor-pointer' : 'cursor-default'}
                   `}
                 >
-                  <span className="text-sm font-medium self-start text-gray-900">
-                    {day}
-                  </span>
-                  
-                  {/* {hasEvents && dayData.event && (
-                    <>
-                      <div className={`mt-1 w-full h-1.5 rounded ${colors?.bg}`} />
-                      <span className="text-xs mt-1 truncate max-w-full text-gray-700">
-                        {dayData.event.title}
-                      </span>
-                    </>
-                  )} */}
-                  
-                  {/* {today && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
-                  )} */}
-
-                  {/* {availableSlots.length > 0 && (
-                    <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {availableSlots.length}
-                    </span>
-                  )} */}
+                  <span className="text-sm font-medium self-start text-gray-900">{day}</span>
                 </button>
 
                 {availableSlots.length > 0 && (
-                  <div
-                    className={`absolute ${tooltipPos.container}
-                      w-64 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-xl z-[100]
-                      transition-all duration-200
-                      ${isMobile
-                        ? (isTooltipOpen
-                          ? 'opacity-100 visible translate-y-0'
-                          : 'opacity-0 invisible translate-y-2 pointer-events-none')
-                        : 'opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'
-                      }
-                    `}
-                  >
+                  <div className={`absolute ${tooltipPos.container} w-64 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-xl z-[100] transition-all duration-200 ${isMobile ? (isTooltipOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2 pointer-events-none') : 'opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0'}`}>
                     <div className="font-semibold mb-2 pb-2 border-b border-gray-700 flex items-center justify-between">
                       <span>{day} {monthNames[month]}</span>
                       {isMobile && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); closeTooltip(); }}
-                          className="p-1 hover:bg-gray-700 rounded"
-                        >
+                        <button type="button" onClick={(e) => { e.stopPropagation(); closeTooltip(); }} className="p-1 hover:bg-gray-700 rounded">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
                       )}
                     </div>
-                    
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {timeSlots.map((slot: TimeSlot) => (
+                      {timeSlots.map((slot) => (
                         <button
                           key={slot.id}
                           type="button"
                           onClick={(e) => handleTimeSlotClick(day, slot, e)}
                           disabled={!slot.available}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left
-                            ${slot.available
-                              ? 'bg-green-600/30 hover:bg-green-600/50 text-green-100 cursor-pointer'
-                              : 'bg-gray-700/50 text-gray-400 cursor-not-allowed'}`}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded text-left ${slot.available ? 'bg-green-600/30 hover:bg-green-600/50 text-green-100 cursor-pointer' : 'bg-gray-700/50 text-gray-400 cursor-not-allowed'}`}
                         >
-                          <span className="text-xs font-mono">
-                            {slot.start} - {slot.end}
-                          </span>
+                          <span className="text-xs font-mono">{slot.start} - {slot.end}</span>
                           {slot.available ? (
                             <span className="text-xs font-medium text-green-300 flex items-center gap-1">
                               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -388,13 +304,10 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
                               </svg>
                               Выбрать
                             </span>
-                          ) : (
-                            <span className="text-xs">Занято</span>
-                          )}
+                          ) : <span className="text-xs">Занято</span>}
                         </button>
                       ))}
                     </div>
-                    
                     <div className={`absolute ${tooltipPos.arrow} border-4 border-transparent`} />
                   </div>
                 )}
@@ -407,7 +320,7 @@ export default function ColoredCalendar({ getDateTime }: ColoredCalendarProps) {
         <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">События:</h3>
           <div className="flex flex-wrap gap-3">
-            {(Object.keys(eventColors) as EventType[]).map((type: EventType) => (
+            {(Object.keys(eventColors) as EventType[]).map((type) => (
               <div key={type} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded ${eventColors[type].bg}`} />
                 <span className="text-sm text-gray-600">

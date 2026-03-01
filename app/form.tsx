@@ -56,8 +56,8 @@ export default function HookForm() {
     try {
       // Имитация API запроса
       // await new Promise(resolve => setTimeout(resolve, 1000));
-      alert(JSON.stringify(data, null, 2));
-      // alert('✅ Форма отправлена!');
+      // alert(JSON.stringify(data, null, 2));
+      alert('✅ Пока всё');
       // reset();
     } catch (error) {
       console.error('Error:', error);
