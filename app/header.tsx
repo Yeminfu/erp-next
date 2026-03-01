@@ -11,7 +11,7 @@ export default function Header() {
 
   useEffect(() => {
     //@ts-ignore
-    setState(window.Telegram.WebApp.initDataUnsafe?.user)
+    setState(window.Telegram)
 
 
 
